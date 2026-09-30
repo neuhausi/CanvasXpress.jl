@@ -2,11 +2,7 @@ module CanvasXpress
 
 using UUIDs
 
-export CXPlot, canvasxpress, cxplot_version
-
-# API-shape alias so R code ports verbatim (see package docs). The core
-# implementation lands in P1; this scaffold establishes the type and surface.
-const canvasXpress = canvasxpress
+export CXPlot, canvasxpress, canvasXpress, cxplot_version
 
 """
     CXPlot
@@ -42,6 +38,10 @@ function canvasxpress(; data=Dict{String,Any}(), config=Dict{String,Any}(),
     )
     return CXPlot(spec, Int(width), Int(height), string(uuid4()))
 end
+
+# API-shape alias so R code ports verbatim (see package docs). The core
+# implementation lands in P1; this scaffold establishes the type and surface.
+const canvasXpress = canvasxpress
 
 "The CanvasXpress engine version this package vendors (set by the release build in P6)."
 cxplot_version() = "unreleased"
