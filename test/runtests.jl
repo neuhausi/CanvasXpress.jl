@@ -237,4 +237,49 @@ fixture(name) = read(joinpath(FIXTURES, name * ".json"), String)
         # validate=false (default) never touches the catalog
         @test_nowarn canvasxpress(m1; vars=g, smps=s, bogusParam=1)
     end
+
+    # ---- P4: static export (savefig via cxplot) ----
+
+    @testset "savefig spec is {data, config}" begin
+        p = canvasxpress(m1; vars=g, smps=s, graphType="Heatmap")
+        sp = CanvasXpress._savefig_spec(p)
+        @test haskey(sp, "data") && haskey(sp, "config")
+        @test sp["config"]["graphType"] == "Heatmap"
+        @test equal_json(JSON3.write(sp["data"]), fixture("matrix_basic"))
+        # afterRender carried through as raw JS
+        sp2 = CanvasXpress._savefig_spec(canvasxpress(m1; afterRender=JSCode("draw()")))
+        @test sp2["afterRender"] == "draw()"
+    end
+
+    @testset "savefig command construction" begin
+        p = canvasxpress(m1; id="cx", width=500, height=400)
+        a = CanvasXpress._savefig_args(p, "out.png"; width=500, height=400, specfile="S.json")
+        @test a[1] == "render" && a[2] == "S.json"
+        @test "-o" in a
+        @test occursin("out.png", join(a, " "))
+        wi = findfirst(==("--width"), a)
+        @test a[wi+1] == "500"
+        # no vendored engine in CI -> pin --engine engine_version()
+        @test "--engine" in a && engine_version() in a
+    end
+
+    @testset "savefig rejects non-PNG" begin
+        p = canvasxpress(m1)
+        @test_throws ErrorException savefig(p, "chart.svg")
+        @test_throws ErrorException savefig(p, "chart.pdf")
+    end
+
+    @testset "clear error when cxplot absent" begin
+        msg = CanvasXpress._cxplot_missing_msg()
+        @test occursin("npm i -g cxplot", msg)
+        @test occursin("Docker", msg)
+    end
+
+    @testset "savefig surfaces a failed render" begin
+        # `true` exits 0 but writes nothing -> savefig must not claim success.
+        p = canvasxpress(m1)
+        out = tempname() * ".png"
+        @test_throws ErrorException savefig(p, out; runner=["true"])
+        @test !isfile(out)
+    end
 end

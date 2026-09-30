@@ -6,7 +6,7 @@ import Tables
 
 export CXPlot, canvasxpress, canvasXpress, canvasxpress_json,
        cx_data_json, cx_json, cxplot_version,
-       savehtml, browse, cx_html_page, JSCode,
+       savehtml, browse, cx_html_page, JSCode, savefig,
        use_cdn!, reset_session!, engine_version,
        cx_config_params, cx_validate_config
 
@@ -254,5 +254,6 @@ cxplot_version() = "unreleased"
 
 include("config.jl")
 include("display.jl")
+include("export.jl")
 
 end # module
