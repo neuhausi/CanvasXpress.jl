@@ -111,7 +111,8 @@ fixture(name) = read(joinpath(FIXTURES, name * ".json"), String)
 
     @testset "fixed id + engine version" begin
         @test canvasxpress(m1; id="cx-test").id == "cx-test"
-        @test engine_version() == "70.6.0"
+        # 3-part semver, set by the release build; don't pin an exact value.
+        @test occursin(r"^\d+\.\d+\.\d+$", engine_version())
     end
 
     @testset "HTML snapshot (self-contained page, CDN)" begin
@@ -124,9 +125,9 @@ fixture(name) = read(joinpath(FIXTURES, name * ".json"), String)
         @test occursin("<title>My Chart</title>", page)
         @test occursin("</html>", page)
 
-        # Engine from cdnjs, pinned to the vendored version (js + css)
-        @test occursin("cdnjs.cloudflare.com/ajax/libs/canvasXpress/70.6.0/canvasXpress.min.js", page)
-        @test occursin("cdnjs.cloudflare.com/ajax/libs/canvasXpress/70.6.0/canvasXpress.css", page)
+        # Engine from cdnjs, pinned to the current engine version (js + css)
+        @test occursin("cdnjs.cloudflare.com/ajax/libs/canvasXpress/$(engine_version())/canvasXpress.min.js", page)
+        @test occursin("cdnjs.cloudflare.com/ajax/libs/canvasXpress/$(engine_version())/canvasXpress.css", page)
 
         # Sized wrapper (canvas shrink-wraps its parent) + canvas id
         @test occursin("width:640px; height:480px;", page)
@@ -151,9 +152,14 @@ fixture(name) = read(joinpath(FIXTURES, name * ".json"), String)
         rm(path)
     end
 
-    @testset "inline without vendored engine errors clearly" begin
-        # No engine is vendored in CI; cdn=false must raise, not silently break.
-        @test_throws ErrorException cx_html_page(canvasxpress(m1); cdn=false)
+    @testset "inline page depends on the vendored engine" begin
+        # After a release build the engine is vendored (data/), so cdn=false inlines
+        # it; before that (fresh checkout) cdn=false must raise, not silently break.
+        if CanvasXpress._engine_vendored()
+            @test occursin("<script>", cx_html_page(canvasxpress(m1); cdn=false))
+        else
+            @test_throws ErrorException cx_html_page(canvasxpress(m1); cdn=false)
+        end
     end
 
     @testset "show MIME methods" begin
@@ -164,7 +170,7 @@ fixture(name) = read(joinpath(FIXTURES, name * ".json"), String)
         use_cdn!(false)
         @test occursin("<canvas id=\"cx-show\"", html)
         @test occursin("new CanvasXpress({renderTo: \"cx-show\"", html)
-        @test occursin("cdnjs.cloudflare.com/ajax/libs/canvasXpress/70.6.0", html)
+        @test occursin("cdnjs.cloudflare.com/ajax/libs/canvasXpress/$(engine_version())", html)
 
         json = sprint(show, MIME("application/canvasxpress+json"), p)
         @test json == cx_json(p)
@@ -259,8 +265,12 @@ fixture(name) = read(joinpath(FIXTURES, name * ".json"), String)
         @test occursin("out.png", join(a, " "))
         wi = findfirst(==("--width"), a)
         @test a[wi+1] == "500"
-        # no vendored engine in CI -> pin --engine engine_version()
-        @test "--engine" in a && engine_version() in a
+        # vendored engine -> --engine-path the local min.js; otherwise pin --engine <ver>
+        if CanvasXpress._engine_vendored()
+            @test "--engine-path" in a
+        else
+            @test "--engine" in a && engine_version() in a
+        end
     end
 
     @testset "savefig rejects non-PNG" begin
