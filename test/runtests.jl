@@ -180,4 +180,61 @@ fixture(name) = read(joinpath(FIXTURES, name * ".json"), String)
         @test occursin("events: function(o,e,t){ return o; }", page)
         @test !occursin("\"function(o,e,t)", page)  # not quoted as a string
     end
+
+    # ---- P3: config catalog + validation ----
+
+    @testset "catalog count == schema count" begin
+        params = cx_config_params()
+        # The vendored catalog's declared count is the schema property count.
+        declared = JSON3.read(read(joinpath(@__DIR__, "..", "data", "config-params.json"), String)).count
+        @test length(params) == declared
+        @test length(params) > 1000
+        # memoized (same object each call)
+        @test cx_config_params() === params
+    end
+
+    @testset "catalog lookup shape" begin
+        params = cx_config_params()
+        gt = only(filter(p -> p.parameter == "graphType", params))
+        @test gt.type == "string|boolean"
+        @test "Bar" in gt.options
+        @test gt.description isa String
+        # non-enumerated parameter has no options
+        cb = only(filter(p -> p.parameter == "colorBy", params))
+        @test cb.options === nothing
+    end
+
+    @testset "validate: unknown key warns" begin
+        r = @test_logs (:warn,) cx_validate_config(Dict("notARealParam" => 1))
+        @test "notARealParam" in r.unknown
+    end
+
+    @testset "validate: bad enum warns" begin
+        r = @test_logs (:warn,) cx_validate_config(Dict("align" => "sideways"))
+        @test haskey(r.bad_options, "align")
+    end
+
+    @testset "validate: bad type warns" begin
+        # adjustBezier is boolean-only; a string is the wrong type.
+        r = @test_logs (:warn,) cx_validate_config(Dict("adjustBezier" => "yes"))
+        @test haskey(r.bad_types, "adjustBezier")
+    end
+
+    @testset "validate: clean config is silent" begin
+        r = @test_nowarn cx_validate_config(Dict("align" => "center", "colorBy" => "Grp"))
+        @test isempty(r.unknown) && isempty(r.bad_options) && isempty(r.bad_types)
+    end
+
+    @testset "validate: strict throws" begin
+        @test_throws ErrorException cx_validate_config(Dict("bogus" => 1); strict=true)
+    end
+
+    @testset "validate via canvasxpress kwarg" begin
+        @test_logs (:warn,) canvasxpress(m1; vars=g, smps=s,
+            graphType="Bar", bogusParam=1, validate=true)
+        @test_throws ErrorException canvasxpress(m1; vars=g, smps=s,
+            graphType="Bar", bogusParam=1, validate=:strict)
+        # validate=false (default) never touches the catalog
+        @test_nowarn canvasxpress(m1; vars=g, smps=s, bogusParam=1)
+    end
 end

@@ -7,7 +7,8 @@ import Tables
 export CXPlot, canvasxpress, canvasXpress, canvasxpress_json,
        cx_data_json, cx_json, cxplot_version,
        savehtml, browse, cx_html_page, JSCode,
-       use_cdn!, reset_session!, engine_version
+       use_cdn!, reset_session!, engine_version,
+       cx_config_params, cx_validate_config
 
 # ---------------------------------------------------------------------------
 # Type
@@ -147,7 +148,7 @@ function canvasxpress(data=nothing;
                       smpAnnotId=nothing, varAnnotId=nothing,
                       events=nothing, afterRender=nothing,
                       width::Integer=600, height::Integer=400,
-                      validate::Bool=false, id=nothing,
+                      validate=false, id=nothing,
                       kwargs...)
 
     config = Dict{String,Any}("graphType" => string(graphType))
@@ -155,8 +156,9 @@ function canvasxpress(data=nothing;
         config[string(k)] = v
     end
 
-    if validate
-        @warn "config validation is not available until P3; `validate=true` is currently a no-op"
+    # validate=true warns on catalog issues; validate=:strict throws.
+    if validate !== false
+        cx_validate_config(config; strict=(validate === :strict))
     end
 
     local datamodel::Any
@@ -250,6 +252,7 @@ cx_data_json(p::CXPlot) = JSON3.write(_sanitize(p.spec["data"]))
 "The CanvasXpress engine version this package vendors (set by the release build in P6)."
 cxplot_version() = "unreleased"
 
+include("config.jl")
 include("display.jl")
 
 end # module
