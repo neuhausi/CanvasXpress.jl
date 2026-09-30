@@ -5,7 +5,9 @@ import JSON3
 import Tables
 
 export CXPlot, canvasxpress, canvasXpress, canvasxpress_json,
-       cx_data_json, cx_json, cxplot_version
+       cx_data_json, cx_json, cxplot_version,
+       savehtml, browse, cx_html_page, JSCode,
+       use_cdn!, reset_session!, engine_version
 
 # ---------------------------------------------------------------------------
 # Type
@@ -145,7 +147,7 @@ function canvasxpress(data=nothing;
                       smpAnnotId=nothing, varAnnotId=nothing,
                       events=nothing, afterRender=nothing,
                       width::Integer=600, height::Integer=400,
-                      validate::Bool=false,
+                      validate::Bool=false, id=nothing,
                       kwargs...)
 
     config = Dict{String,Any}("graphType" => string(graphType))
@@ -187,7 +189,8 @@ function canvasxpress(data=nothing;
         "events" => events,
         "afterRender" => afterRender,
     )
-    return CXPlot(spec, Int(width), Int(height), string(uuid4()))
+    canvasid = id === nothing ? "cx-" * string(uuid4()) : string(id)
+    return CXPlot(spec, Int(width), Int(height), canvasid)
 end
 
 # API-shape alias so R code ports verbatim.
@@ -201,7 +204,7 @@ JSON string) in a `CXPlot` without touching it.
 """
 function canvasxpress_json(spec::AbstractDict; width::Integer=600, height::Integer=400)
     s = Dict{String,Any}(string(k) => v for (k, v) in spec)
-    return CXPlot(s, Int(width), Int(height), string(uuid4()))
+    return CXPlot(s, Int(width), Int(height), "cx-" * string(uuid4()))
 end
 
 canvasxpress_json(spec::NamedTuple; kwargs...) =
@@ -246,5 +249,7 @@ cx_data_json(p::CXPlot) = JSON3.write(_sanitize(p.spec["data"]))
 
 "The CanvasXpress engine version this package vendors (set by the release build in P6)."
 cxplot_version() = "unreleased"
+
+include("display.jl")
 
 end # module
