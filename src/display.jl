@@ -7,7 +7,7 @@
 
 # ---- session / engine state ----
 
-const ENGINE_VERSION = Ref("70.6.0")   # updated by the P6 release build
+const ENGINE_VERSION = Ref("70.7.0")   # updated by the P6 release build
 const _USE_CDN = Ref(false)            # default: inline (D2)
 const _INJECTED = Ref(false)           # engine already inlined this session?
 const _WARNED_NO_ENGINE = Ref(false)

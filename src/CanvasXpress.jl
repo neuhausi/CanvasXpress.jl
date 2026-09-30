@@ -250,7 +250,7 @@ This matches the R `canvasXpress()` data model byte-for-byte for clean reference
 cx_data_json(p::CXPlot) = JSON3.write(_sanitize(p.spec["data"]))
 
 "The CanvasXpress engine version this package vendors (set by the release build in P6)."
-cxplot_version() = "unreleased"
+cxplot_version() = "70.7.0"
 
 include("config.jl")
 include("display.jl")
