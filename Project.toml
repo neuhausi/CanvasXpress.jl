@@ -1,7 +1,7 @@
 name = "CanvasXpress"
 uuid = "e37708c0-81e0-4be4-a376-6356e7fe7ab1"
 authors = ["Isaac Neuhaus <imnphd@gmail.com>"]
-version = "70.7.0"
+version = "0.1.0"
 
 [deps]
 JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"

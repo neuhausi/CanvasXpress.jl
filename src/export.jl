@@ -1,9 +1,9 @@
 # Static export via the `cxplot` CLI (or its container).
 #
 # cxplot renders a `{data, config}` figure with the SAME engine the browser runs,
-# headless via Playwright/Chromium. Output is PNG only (no SVG/PDF). savefig points
-# `--engine-path` at the vendored min.js so the PNG matches the interactive render;
-# when the engine isn't vendored yet it pins `--engine <version>` (cdnjs, cached).
+# headless via Playwright/Chromium. Output is PNG only (no SVG/PDF). By default savefig
+# pins `--engine <engine_version()>` (cdnjs, cached); set a local engine with
+# `set_engine_dir!` (or pass `engine_path`) to render against a specific build.
 
 # The figure spec cxplot accepts: {data, config} (+ optional afterRender replay).
 function _savefig_spec(p::CXPlot)
@@ -47,7 +47,7 @@ function _savefig_args(p::CXPlot, path::AbstractString;
                   "--width", string(width), "--height", string(height)]
     if engine_path !== nothing
         append!(args, ["--engine-path", string(engine_path)])
-    elseif _engine_vendored()
+    elseif _engine_local()
         append!(args, ["--engine-path", _engine_js_path()])
     elseif engine !== nothing
         append!(args, ["--engine", string(engine)])
@@ -65,10 +65,10 @@ end
 Render `p` to a PNG at `path` using the `cxplot` CLI (or the `ghcr.io/neuhausi/cxplot`
 container as a fallback). cxplot renders **PNG only** — an SVG/PDF path is rejected.
 
-By default the vendored engine is used (`--engine-path`) so the PNG matches the interactive
-render; without a vendored engine it pins `--engine engine_version()` (cdnjs). Pass `runner`
-(e.g. `["npx", "cxplot"]`) to choose how cxplot is invoked. Errors clearly if neither cxplot
-nor Docker is available.
+By default it pins `--engine engine_version()` (cdnjs); if a local engine is configured via
+`set_engine_dir!` (or `engine_path` is passed) that build is used instead so the PNG matches
+the interactive render. Pass `runner` (e.g. `["npx", "cxplot"]`) to choose how cxplot is
+invoked. Errors clearly if neither cxplot nor Docker is available.
 """
 function savefig(p::CXPlot, path::AbstractString;
                  width::Integer=p.width, height::Integer=p.height,

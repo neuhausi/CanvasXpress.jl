@@ -5,9 +5,9 @@ import JSON3
 import Tables
 
 export CXPlot, canvasxpress, canvasXpress, canvasxpress_json,
-       cx_data_json, cx_json, cxplot_version,
+       cx_data_json, cx_json,
        savehtml, browse, cx_html_page, JSCode, savefig,
-       use_cdn!, reset_session!, engine_version,
+       set_engine_dir!, engine_version,
        cx_config_params, cx_validate_config
 
 # ---------------------------------------------------------------------------
@@ -248,9 +248,6 @@ Serialize just the `data` model (`y`/`x`/`z`) to JSON, mapping missing/NaN/Inf t
 This matches the R `canvasXpress()` data model byte-for-byte for clean reference datasets.
 """
 cx_data_json(p::CXPlot) = JSON3.write(_sanitize(p.spec["data"]))
-
-"The CanvasXpress engine version this package vendors (set by the release build in P6)."
-cxplot_version() = "70.7.0"
 
 include("config.jl")
 include("display.jl")

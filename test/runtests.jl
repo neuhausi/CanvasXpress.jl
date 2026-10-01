@@ -152,22 +152,23 @@ fixture(name) = read(joinpath(FIXTURES, name * ".json"), String)
         rm(path)
     end
 
-    @testset "inline page depends on the vendored engine" begin
-        # After a release build the engine is vendored (data/), so cdn=false inlines
-        # it; before that (fresh checkout) cdn=false must raise, not silently break.
-        if CanvasXpress._engine_vendored()
-            @test occursin("<script>", cx_html_page(canvasxpress(m1); cdn=false))
-        else
-            @test_throws ErrorException cx_html_page(canvasxpress(m1); cdn=false)
-        end
+    @testset "offline engine via set_engine_dir!" begin
+        # No local engine by default -> cdn=false must raise, not silently break.
+        @test_throws ErrorException cx_html_page(canvasxpress(m1); cdn=false)
+        # Point at a local engine -> cdn=false inlines it; then revert to the CDN.
+        dir = mktempdir()
+        write(joinpath(dir, "canvasXpress.min.js"), "/* fake engine */")
+        write(joinpath(dir, "canvasXpress.css"), "/* fake css */")
+        set_engine_dir!(dir)
+        @test occursin("fake engine", cx_html_page(canvasxpress(m1); cdn=false))
+        set_engine_dir!(nothing)
+        rm(dir; recursive=true)
     end
 
     @testset "show MIME methods" begin
         p = canvasxpress(m1; vars=g, smps=s, graphType="Heatmap", id="cx-show")
 
-        use_cdn!(true)
         html = sprint(show, MIME("text/html"), p)
-        use_cdn!(false)
         @test occursin("<canvas id=\"cx-show\"", html)
         @test occursin("new CanvasXpress({renderTo: \"cx-show\"", html)
         @test occursin("cdnjs.cloudflare.com/ajax/libs/canvasXpress/$(engine_version())", html)
@@ -265,8 +266,8 @@ fixture(name) = read(joinpath(FIXTURES, name * ".json"), String)
         @test occursin("out.png", join(a, " "))
         wi = findfirst(==("--width"), a)
         @test a[wi+1] == "500"
-        # vendored engine -> --engine-path the local min.js; otherwise pin --engine <ver>
-        if CanvasXpress._engine_vendored()
+        # local engine -> --engine-path; otherwise pin --engine <ver> (default: CDN)
+        if CanvasXpress._engine_local()
             @test "--engine-path" in a
         else
             @test "--engine" in a && engine_version() in a

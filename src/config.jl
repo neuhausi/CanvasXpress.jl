@@ -1,10 +1,9 @@
 # Config-parameter catalog + validation.
 #
-# Vendors the SAME `config-params.json` the R package ships (generated from the
-# CanvasXpress config schema by `build.py --schema`; refreshed into data/ by the
-# release build in P6). This is the R equivalent of the JS `.d.ts` / Python
-# `CXConfig` typed surfaces: a searchable, documented reference for parameters that
-# otherwise flow through keyword args unchecked.
+# Ships the same `config-params.json` the R package uses (every CanvasXpress config
+# parameter with its type, default, allowed values and description). It is the Julia
+# equivalent of the JavaScript `.d.ts` / Python `CXConfig` typed surfaces: a searchable,
+# documented reference for parameters that otherwise flow through keyword args unchecked.
 
 const _CATALOG_PATH = normpath(joinpath(@__DIR__, "..", "data", "config-params.json"))
 
@@ -14,8 +13,7 @@ const _CATALOG_INDEX = Ref{Any}(nothing)
 
 function _load_catalog()
     isfile(_CATALOG_PATH) ||
-        error("CanvasXpress config catalog not found at $_CATALOG_PATH — reinstall the " *
-              "package or run build.py --schema (it is vendored by the release build).")
+        error("CanvasXpress config catalog not found at $_CATALOG_PATH — reinstall the package.")
     raw = JSON3.read(read(_CATALOG_PATH, String))
     entries = NamedTuple[]
     index = Dict{String,Int}()
