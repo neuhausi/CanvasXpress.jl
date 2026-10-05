@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/neuhausi/CanvasXpress.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/neuhausi/CanvasXpress.jl/actions/workflows/CI.yml)
 [![codecov](https://codecov.io/gh/neuhausi/CanvasXpress.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/neuhausi/CanvasXpress.jl)
+[![docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://neuhausi.github.io/CanvasXpress.jl/stable/)
 
 Julia interface to [CanvasXpress](https://canvasxpress.org) — interactive, self-contained
 JavaScript charts driven from Julia tables and matrices. Renders in IJulia/Jupyter, Pluto,

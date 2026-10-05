@@ -293,4 +293,42 @@ fixture(name) = read(joinpath(FIXTURES, name * ".json"), String)
         @test_throws ErrorException savefig(p, out; runner=["true"])
         @test !isfile(out)
     end
+
+    # ---- extra coverage ----
+
+    @testset "canvasxpress_json variants" begin
+        nt = canvasxpress_json((data=Dict("y" => Dict("vars" => ["a"])),
+                                config=Dict("graphType" => "Line")))
+        @test nt.spec["config"]["graphType"] == "Line"
+        d = canvasxpress_json(Dict("data" => Dict(), "config" => Dict("graphType" => "Pie")))
+        @test d.spec["config"]["graphType"] == "Pie"
+        @test startswith(d.id, "cx-")
+    end
+
+    @testset "config-only + Tables smps override" begin
+        p = canvasxpress(; graphType="Map")
+        @test p.spec["data"] === nothing
+        @test cx_json(p) isa String
+        tbl = (gene=["g1", "g2"], a=[1, 2], b=[3, 4])
+        q = canvasxpress(tbl; rownames=:gene, smps=["x", "y"], graphType="Heatmap")
+        @test q.spec["data"]["y"]["smps"] == ["x", "y"]
+    end
+
+    @testset "validate :strict via canvasxpress returns, varAnnot errors" begin
+        @test_throws ArgumentError canvasxpress(m1; vars=g, smps=s,
+            varAnnot=Dict("Bad" => ["only-one"]), graphType="Heatmap")
+    end
+
+    @testset "download_engine! (network)" begin
+        try
+            dir = download_engine!()
+            @test isfile(joinpath(dir, "canvasXpress.min.js"))
+            @test CanvasXpress._engine_local()
+            # a second call reuses the cache (no error)
+            @test download_engine!() == dir
+            set_engine_dir!(nothing)
+        catch e
+            @warn "download_engine! skipped (no network?)" exception = e
+        end
+    end
 end

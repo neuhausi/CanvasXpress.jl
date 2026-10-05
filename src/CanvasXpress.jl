@@ -3,11 +3,13 @@ module CanvasXpress
 using UUIDs
 import JSON3
 import Tables
+import Downloads
+import Scratch
 
 export CXPlot, canvasxpress, canvasXpress, canvasxpress_json,
        cx_data_json, cx_json,
        savehtml, browse, cx_html_page, JSCode, savefig,
-       set_engine_dir!, engine_version,
+       set_engine_dir!, download_engine!, engine_version,
        cx_config_params, cx_validate_config
 
 # ---------------------------------------------------------------------------
@@ -195,7 +197,11 @@ function canvasxpress(data=nothing;
     return CXPlot(spec, Int(width), Int(height), canvasid)
 end
 
-# API-shape alias so R code ports verbatim.
+"""
+    canvasXpress(data=nothing; kwargs...)
+
+Alias for [`canvasxpress`](@ref) so R-style calls read the same in Julia.
+"""
 const canvasXpress = canvasxpress
 
 """

@@ -33,6 +33,26 @@ function set_engine_dir!(dir::Union{Nothing,AbstractString})
     return _ENGINE_DIR[]
 end
 
+"""
+    download_engine!(; version=engine_version(), force=false) -> String
+
+Download the pinned CanvasXpress engine (`canvasXpress.min.js` + `canvasXpress.css`) from
+cdnjs into a persistent per-version cache, then switch to it via [`set_engine_dir!`] for
+offline rendering. The download happens once per version (reused on later calls); pass
+`force=true` to re-download. Returns the cache directory. Requires network on first use.
+"""
+function download_engine!(; version::AbstractString=engine_version(), force::Bool=false)
+    dir = joinpath(Scratch.get_scratch!(@__MODULE__, "engine"), version)
+    isdir(dir) || mkpath(dir)
+    base = "https://cdnjs.cloudflare.com/ajax/libs/canvasXpress/$(version)"
+    for f in ("canvasXpress.min.js", "canvasXpress.css")
+        dst = joinpath(dir, f)
+        (force || !isfile(dst)) && Downloads.download("$(base)/$(f)", dst)
+    end
+    set_engine_dir!(dir)
+    return dir
+end
+
 _engine_js_path() = _ENGINE_DIR[] === nothing ? nothing : joinpath(_ENGINE_DIR[], "canvasXpress.min.js")
 _engine_css_path() = _ENGINE_DIR[] === nothing ? nothing : joinpath(_ENGINE_DIR[], "canvasXpress.css")
 _engine_local() = _ENGINE_DIR[] !== nothing
