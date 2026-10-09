@@ -6,7 +6,7 @@
 
 # ---- engine delivery state ----
 
-const ENGINE_VERSION = Ref("71.2.0")                 # cdnjs version this package pins to
+const ENGINE_VERSION = Ref("71.3.0")                 # cdnjs version this package pins to
 const _ENGINE_DIR = Ref{Union{Nothing,String}}(nothing)  # local engine dir (offline), or CDN
 const _INJECTED = Ref(false)                          # local engine already inlined this session?
 
